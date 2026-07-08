@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_appName__",
+  "description": "__MSG_appDesc__",
+  "version": "1.0.0",
+  "default_locale": "pt_BR",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "alarms",
+    "storage",
+    "browsingData",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://power.dwfsistemas.com/*",
+    "https://app.dwfsistemas.com/*",
+    "https://mdm.dwfsistemas.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://power.dwfsistemas.com/*",
+        "https://app.dwfsistemas.com/*",
+        "https://mdm.dwfsistemas.com/*"
+      ],
+      "js": ["lib/defaults.js", "content/monitor.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://app.dwfsistemas.com/*"],
+      "js": ["content/autologin.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/options.html",
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  }
+}

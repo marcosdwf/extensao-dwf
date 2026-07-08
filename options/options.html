@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Assistente DWF — Configurações</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Assistente DWF</h1>
+    <p class="subtitle">Configurações da extensão</p>
+
+    <section>
+      <h2>Sites monitorados</h2>
+      <label><input type="checkbox" id="site-power" checked> power.dwfsistemas.com</label>
+      <label><input type="checkbox" id="site-app" checked> app.dwfsistemas.com</label>
+      <label><input type="checkbox" id="site-mdm" checked> mdm.dwfsistemas.com</label>
+    </section>
+
+    <section>
+      <h2>Manter guia ativa</h2>
+      <label><input type="checkbox" id="keepalive-enabled" checked> Impedir que o Chrome adormeça ou descarte as guias DWF</label>
+      <div class="row">
+        <label for="idle-minutes">Considerar usuário ocioso após</label>
+        <input type="number" id="idle-minutes" min="1" max="60"> <span>min sem interação (nenhum reload acontece antes disso)</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Recarregamento automático</h2>
+      <label><input type="checkbox" id="reload-enabled" checked> Recarregar as guias periodicamente</label>
+      <div class="row">
+        <label for="reload-minutes">Intervalo</label>
+        <input type="number" id="reload-minutes" min="1" max="1440"> <span>minutos</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Limpeza de dados</h2>
+      <label><input type="checkbox" id="cleanup-enabled" checked> Limpar dados dos sites DWF periodicamente</label>
+      <div class="row">
+        <label for="cleanup-hours">Intervalo</label>
+        <input type="number" id="cleanup-hours" min="1" max="720"> <span>horas</span>
+      </div>
+      <div class="row">
+        <label for="cleanup-scope">O que limpar</label>
+        <select id="cleanup-scope">
+          <option value="cache" selected>Só cache (não desloga)</option>
+          <option value="storage">Cache + armazenamento local (não desloga)</option>
+          <option value="full">Limpeza completa, incluindo cookies (desloga)</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <h2>Alerta de som</h2>
+      <label><input type="checkbox" id="sound-enabled" checked> Notificar na central do Windows quando uma guia DWF emitir som</label>
+      <div class="row">
+        <button id="test-notification">Testar notificação</button>
+      </div>
+      <p class="hint">A notificação "Som detectado, alarme tocando" aparece na central de notificações; clicar nela abre a guia que está tocando. Se o teste não aparecer, verifique se o Chrome pode notificar em Configurações do Windows → Sistema → Notificações e se o Não Perturbe está desligado.</p>
+    </section>
+
+    <section>
+      <h2>Login automático (app.dwfsistemas.com)</h2>
+      <label><input type="checkbox" id="login-enabled" checked> Ativar login automático</label>
+      <div class="row">
+        <label for="login-mode">Modo</label>
+        <select id="login-mode">
+          <option value="auto" selected>Entrar sozinho ao abrir a página de login</option>
+          <option value="f2">Entrar só quando eu apertar F2</option>
+        </select>
+      </div>
+      <div class="creds">
+        <div id="creds-list"></div>
+        <p id="creds-empty" class="hint" hidden>Nenhuma conta salva.</p>
+        <div class="row">
+          <label for="cred-user">Usuário</label>
+          <input type="text" id="cred-user" autocomplete="off">
+        </div>
+        <div class="row">
+          <label for="cred-pass">Senha</label>
+          <input type="password" id="cred-pass" autocomplete="off">
+        </div>
+        <div class="row">
+          <button id="save-creds">Adicionar conta</button>
+        </div>
+        <p class="hint">Depois de salva, a senha não pode mais ser vista pela extensão — só usada para entrar. A primeira conta salva vira a padrão; use "Tornar padrão" para trocar.</p>
+      </div>
+    </section>
+
+    <div class="footer">
+      <button id="save" class="primary">Salvar configurações</button>
+      <span id="status"></span>
+    </div>
+  </main>
+  <script src="../lib/defaults.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

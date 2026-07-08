@@ -1,0 +1,8 @@
+{
+  "appName": {
+    "message": "Assistente DWF"
+  },
+  "appDesc": {
+    "message": "Mantém os painéis DWF Sistemas sempre ativos e atualizados: impede que o Chrome adormeça as guias, recarrega e limpa dados periodicamente e faz login automático."
+  }
+}

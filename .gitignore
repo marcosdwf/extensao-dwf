@@ -1,0 +1,13 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+
+# Empacotamento para a Chrome Web Store (gerado, não versionado)
+*.zip
+*.crx
+*.pem

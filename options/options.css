@@ -1,0 +1,103 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+h1 { margin: 0; font-size: 22px; }
+.subtitle { margin: 2px 0 20px; color: #64748b; }
+
+section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+h2 { margin: 0 0 10px; font-size: 15px; }
+
+label { display: block; margin: 6px 0; }
+label input[type="checkbox"] { margin-right: 8px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+.row label { margin: 0; min-width: 120px; }
+.row span { color: #64748b; }
+
+input[type="number"] { width: 80px; }
+input[type="number"], input[type="text"], input[type="password"], select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+}
+input[type="text"], input[type="password"] { width: 240px; }
+
+button {
+  padding: 7px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover { background: #f8fafc; }
+button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+button.primary:hover { background: #1d4ed8; }
+button.danger { color: #b91c1c; border-color: #fca5a5; }
+button.danger:hover { background: #fef2f2; }
+
+.creds {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+.hint { color: #64748b; font-size: 12px; margin: 8px 0 0; }
+
+#creds-list { margin-bottom: 10px; }
+.cred-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.cred-row:last-child { border-bottom: none; }
+.cred-user { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
+.cred-row button { padding: 4px 10px; font-size: 12px; }
+.badge {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+#status { color: #16a34a; font-weight: 600; }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Assistente DWF</h1>
+
+  <div class="actions">
+    <button id="reload-now" hidden>Recarregar guia atual</button>
+    <button id="reload-all">Recarregar todas as guias DWF</button>
+    <button id="cleanup-now">Limpar dados agora</button>
+    <button id="open-options" class="primary">Configurações</button>
+  </div>
+
+  <dl>
+    <dt>Última limpeza</dt><dd id="d-cleanup">—</dd>
+  </dl>
+
+  <div id="site-status" class="muted">Verificando guias…</div>
+  <div id="tabs-list"></div>
+  <script src="../lib/defaults.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
