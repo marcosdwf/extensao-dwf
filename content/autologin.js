@@ -7,11 +7,18 @@
   globalThis.__dwfAutologinActive = true;
 
   const LOGIN_PATH = "/login";
+  const LOGOUT_PATH = "/logout";
   const LOOP_GUARD_KEY = "dwfLoginAttemptTs";
   const LOOP_GUARD_MS = 60000;
   const FORM_WAIT_MS = 15000;
 
+  // Guarda da limpeza de cache no logout: evita limpar de novo no redirect
+  // /logout -> /login (mesma aba). É independente do guard do auto login.
+  const CACHE_GUARD_KEY = "dwfLoginCacheClearedTs";
+  const CACHE_GUARD_MS = 30000;
+
   const isLoginPage = () => location.pathname.startsWith(LOGIN_PATH);
+  const isLogoutPage = () => location.pathname.startsWith(LOGOUT_PATH);
 
   const send = (msg) => {
     try {
@@ -83,8 +90,19 @@
     );
   };
 
-  const doLogin = async (manual) => {
-    const data = await send({ type: "getAutoLoginData" });
+  // Pede ao service worker para limpar o cache da origem. NÃO recarrega a
+  // página de login (recarregar cairia de novo em /login = loop). Só limpa;
+  // o próximo carregamento (o app, após a entrada) vem atualizado.
+  const maybeClearLoginCache = async (data) => {
+    if (!data || !data.clearCacheOnLogin) return;
+    const last = Number(sessionStorage.getItem(CACHE_GUARD_KEY) || 0);
+    if (Date.now() - last < CACHE_GUARD_MS) return;
+    sessionStorage.setItem(CACHE_GUARD_KEY, String(Date.now()));
+    await send({ type: "clearLoginCache" });
+  };
+
+  const doLogin = async (manual, preloaded) => {
+    const data = preloaded || (await send({ type: "getAutoLoginData" }));
     if (!data || !data.credentials) {
       if (manual) showToast("Assistente DWF: nenhum login salvo. Configure na extensão.");
       return;
@@ -202,15 +220,24 @@
 
   // ---------- Inicialização ----------
 
-  if (isLoginPage()) {
-    watchSubmit();
-    doLogin(false);
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "F2") {
-        e.preventDefault();
-        doLogin(true);
+  if (isLoginPage() || isLogoutPage()) {
+    // Ordem garantida: 1º limpa o cache (se ligado), 2º faz o auto login,
+    // para o usuário entrar já com o cache limpo. Em /logout só limpa; o
+    // login roda quando o app redirecionar para /login.
+    (async () => {
+      const data = await send({ type: "getAutoLoginData" });
+      await maybeClearLoginCache(data);
+      if (isLoginPage()) {
+        watchSubmit();
+        doLogin(false, data);
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "F2") {
+            e.preventDefault();
+            doLogin(true);
+          }
+        });
       }
-    });
+    })();
   } else {
     // Página interna: se há credenciais pendentes da última entrada, oferece salvar.
     send({ type: "getPendingCredentials" }).then((pending) => {

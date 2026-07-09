@@ -262,7 +262,11 @@ async function maybeCleanup(settings, tabs, state) {
   await runCleanup(settings, tabs, state);
 }
 
-async function runCleanup(settings, tabs, state) {
+// immediate = true (botão "limpar agora"): recarrega as guias na hora, com
+// bypass de cache. immediate = false (limpeza periódica de 24 h): só marca
+// pendingBypass e deixa o tique recarregar quando o usuário ficar ocioso,
+// para não interromper quem está trabalhando.
+async function runCleanup(settings, tabs, state, { immediate = false } = {}) {
   const origins = enabledOrigins(settings);
   if (!origins.length) return;
 
@@ -282,14 +286,26 @@ async function runCleanup(settings, tabs, state) {
     );
   }
 
-  // Cache HTTP: marca cada guia DWF para reload com bypass; o tique executa
-  // assim que o usuário estiver ocioso.
+  const now = Date.now();
   for (const tab of tabs) {
     const st = (state[tab.id] = state[tab.id] || {});
-    st.pendingBypass = true;
+    if (immediate) {
+      // Recarrega já, sem cache: é o único jeito de limpar o cache HTTP por
+      // origem (browsingData não filtra cache por origem).
+      try {
+        await chrome.tabs.reload(tab.id, { bypassCache: true });
+        st.lastReload = now;
+        st.lastHeartbeat = now;
+        st.pendingBypass = false;
+      } catch {
+        // guia fechou no meio; segue as demais
+      }
+    } else {
+      st.pendingBypass = true;
+    }
   }
   await setTabState(state);
-  await chrome.storage.local.set({ lastCleanup: Date.now() });
+  await chrome.storage.local.set({ lastCleanup: now });
 }
 
 // ---------- Credenciais (múltiplas contas) ----------
@@ -410,6 +426,7 @@ async function handleMessage(msg, sender) {
       return {
         enabled: settings.autoLogin.enabled && settings.sites.app,
         mode: settings.autoLogin.mode,
+        clearCacheOnLogin: settings.cleanup.clearOnLogout && settings.sites.app,
         credentials: def ? { username: def.username, password: def.password } : null
       };
     }
@@ -573,8 +590,31 @@ async function handleMessage(msg, sender) {
       const patterns = enabledUrlPatterns(settings);
       const tabs = patterns.length ? await chrome.tabs.query({ url: patterns }) : [];
       const state = await getTabState();
-      await runCleanup(settings, tabs, state);
+      await runCleanup(settings, tabs, state, { immediate: true });
       return { done: true };
+    }
+
+    case "clearLoginCache": {
+      // Disparado pelo content script ao cair em /login ou /logout do app.
+      // Limpa o cache da origem (cacheStorage + service workers) para o
+      // próximo carregamento vir atualizado, sem recarregar a página de login
+      // (recarregar cairia de novo em /login e faria loop).
+      if (!senderIsAppTab(sender)) return {};
+      const settings = await getSettings();
+      if (!settings.cleanup.clearOnLogout || !settings.sites.app) return {};
+      const appOrigin = `https://${DWF_HOSTS.app}`;
+      try {
+        await chrome.browsingData.remove(
+          { origins: [appOrigin] },
+          { cacheStorage: true, serviceWorkers: true }
+        );
+        // Cache HTTP não filtra por origem; limpa o global para garantir
+        // assets/JS atualizados após a entrada. Só acontece no logout (raro).
+        await chrome.browsingData.remove({}, { cache: true });
+      } catch {
+        // sem permissão/origem inválida: apenas ignora, o login segue
+      }
+      return { cleared: true };
     }
 
     default:

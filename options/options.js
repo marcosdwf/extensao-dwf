@@ -20,6 +20,7 @@ async function load() {
   $("cleanup-enabled").checked = s.cleanup.enabled;
   $("cleanup-hours").value = s.cleanup.hours;
   $("cleanup-scope").value = s.cleanup.scope;
+  $("cleanup-onlogout").checked = s.cleanup.clearOnLogout;
 
   $("login-enabled").checked = s.autoLogin.enabled;
   $("login-mode").value = s.autoLogin.mode;
@@ -94,7 +95,8 @@ async function save() {
     cleanup: {
       enabled: $("cleanup-enabled").checked,
       hours: clampInt($("cleanup-hours").value, 1, 720, DWF_DEFAULTS.cleanup.hours),
-      scope: $("cleanup-scope").value
+      scope: $("cleanup-scope").value,
+      clearOnLogout: $("cleanup-onlogout").checked
     },
     autoLogin: {
       enabled: $("login-enabled").checked,
