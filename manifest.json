@@ -39,6 +39,11 @@
       "matches": ["https://app.dwfsistemas.com/*"],
       "js": ["content/autologin.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://power.dwfsistemas.com/*"],
+      "js": ["lib/defaults.js", "content/unifilar.js"],
+      "run_at": "document_idle"
     }
   ],
   "options_page": "options/options.html",

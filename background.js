@@ -86,10 +86,16 @@ async function adoptExistingTabs() {
         target: { tabId: tab.id },
         files: ["lib/defaults.js", "content/monitor.js"]
       });
-      if (new URL(tab.url).hostname === DWF_HOSTS.app) {
+      const host = new URL(tab.url).hostname;
+      if (host === DWF_HOSTS.app) {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ["content/autologin.js"]
+        });
+      } else if (host === DWF_HOSTS.power) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["content/unifilar.js"]
         });
       }
     } catch {
@@ -153,10 +159,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   });
 });
 
-// Clicar na notificação leva direto à guia que está tocando.
+// Clicar na notificação leva direto à guia de origem (som ou modal de alarme).
 chrome.notifications.onClicked.addListener(async (notificationId) => {
-  if (!notificationId.startsWith("dwf-sound-")) return;
-  const tabId = Number(notificationId.slice("dwf-sound-".length));
+  const match = notificationId.match(/^dwf-(?:sound|alarmmodal)-(\d+)$/);
+  if (!match) return;
+  const tabId = Number(match[1]);
   try {
     const tab = await chrome.tabs.get(tabId);
     await chrome.tabs.update(tabId, { active: true });
@@ -592,6 +599,27 @@ async function handleMessage(msg, sender) {
       const state = await getTabState();
       await runCleanup(settings, tabs, state, { immediate: true });
       return { done: true };
+    }
+
+    case "unifilarAlarmModal": {
+      // Modal "não conseguiu habilitar o som" apareceu no unifilar (power).
+      // A extensão não mexe na modal — só lembra o usuário via notificação;
+      // ativar o som exige um toque real dele na página.
+      if (!sender.tab) return {};
+      let host = "";
+      try {
+        host = new URL(sender.url).hostname;
+      } catch {}
+      if (host !== DWF_HOSTS.power) return {};
+      chrome.notifications.create(`dwf-alarmmodal-${sender.tab.id}`, {
+        type: "basic",
+        iconUrl: "icons/icon128.png",
+        title: "Assistente DWF",
+        message: "Ative o som dos alarmes: o unifilar está pedindo confirmação.",
+        contextMessage: host,
+        priority: 2
+      });
+      return {};
     }
 
     case "clearLoginCache": {

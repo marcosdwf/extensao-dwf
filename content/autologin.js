@@ -179,7 +179,9 @@
   });
 
   const showSaveBanner = (username) => {
+    if (document.querySelector("[data-dwf-save-banner]")) return; // já tem um aberto
     const box = document.createElement("div");
+    box.dataset.dwfSaveBanner = "1";
     Object.assign(box.style, baseBoxStyle(), { padding: "12px 14px", maxWidth: "320px" });
 
     const msg = document.createElement("div");
@@ -220,28 +222,53 @@
 
   // ---------- Inicialização ----------
 
-  if (isLoginPage() || isLogoutPage()) {
-    // Ordem garantida: 1º limpa o cache (se ligado), 2º faz o auto login,
-    // para o usuário entrar já com o cache limpo. Em /logout só limpa; o
-    // login roda quando o app redirecionar para /login.
-    (async () => {
+  // watchSubmit registra listeners no document (capture), que sobrevivem às
+  // trocas de rota SPA; por isso só pode rodar uma vez.
+  let submitWatched = false;
+  const ensureSubmitWatcher = () => {
+    if (submitWatched) return;
+    submitWatched = true;
+    watchSubmit();
+  };
+
+  // Chamado no carregamento e a cada troca de rota (inclusive SPA). Em
+  // /login ou /logout: limpa o cache (se ligado) e então faz o auto login,
+  // nessa ordem. Nas demais páginas: oferece salvar o login pendente.
+  const onRoute = async () => {
+    if (isLoginPage() || isLogoutPage()) {
       const data = await send({ type: "getAutoLoginData" });
       await maybeClearLoginCache(data);
       if (isLoginPage()) {
-        watchSubmit();
+        ensureSubmitWatcher();
         doLogin(false, data);
-        window.addEventListener("keydown", (e) => {
-          if (e.key === "F2") {
-            e.preventDefault();
-            doLogin(true);
-          }
-        });
       }
-    })();
-  } else {
-    // Página interna: se há credenciais pendentes da última entrada, oferece salvar.
-    send({ type: "getPendingCredentials" }).then((pending) => {
+    } else {
+      const pending = await send({ type: "getPendingCredentials" });
       if (pending && pending.username) showSaveBanner(pending.username);
-    });
-  }
+    }
+  };
+
+  // Logout manual navega para /login por dentro do Angular (sem recarregar a
+  // página), então o content script não reinjeta. O mundo isolado não enxerga
+  // o pushState do app, logo monkeypatch de history não pega — a via confiável
+  // é vigiar location.href. Assim o auto login volta a disparar após qualquer
+  // logout (manual ou automático). Quem não quiser, desliga nas configurações.
+  let lastHref = location.href;
+  const checkRoute = () => {
+    if (location.href === lastHref) return;
+    lastHref = location.href;
+    onRoute();
+  };
+  setInterval(checkRoute, 1000);
+  window.addEventListener("popstate", checkRoute);
+
+  // F2 força o login manual sempre que estiver na tela de login.
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "F2" && isLoginPage()) {
+      e.preventDefault();
+      doLogin(true);
+    }
+  });
+
+  onRoute();
 })();
